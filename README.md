@@ -61,7 +61,7 @@ See `README.md` for ready-to-use Lovelace card examples.
 
 ## License
 
-MIT License - see LICENSE file
+Apache License, Version 2.0 - see LICENSE file
 
 ## Support
 
