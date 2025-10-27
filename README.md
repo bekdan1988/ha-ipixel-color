@@ -44,11 +44,81 @@ A complete Home Assistant custom integration for controlling iPixel Color LED ma
    - Configure connectivity (BLE or WiFi)
 5. Use **Options** menu to customize anytime
 
+## Created Entities
+
+After setup, the following entities will be created:
+
+### Light Entity
+- **light.ipixel_matrix**: Main control for the LED matrix
+
+### Select Entities
+- **select.ipixel_display_mode**: Choose display mode
+- **select.ipixel_clock_format**: Select clock format
+- **select.ipixel_text_effect**: Choose text animation effect
+- **select.ipixel_visual_effect**: Select visual effect pattern
+
+### Number Entities
+- **number.ipixel_brightness**: Brightness control (0-255)
+- **number.ipixel_scroll_speed**: Text scroll speed (1-100)
+- **number.ipixel_effect_speed**: Effect animation speed (1-100)
+- **number.ipixel_music_sensitivity**: Music sensitivity (1-100)
+
+### Text Entities
+- **text.ipixel_display_text**: Enter text to display
+- **text.ipixel_custom_time_format**: Custom time format string
+
+### Switch Entities
+- **switch.ipixel_show_date**: Toggle date display
+- **switch.ipixel_show_seconds**: Toggle seconds display
+- **switch.ipixel_auto_brightness**: Enable automatic brightness
+- **switch.ipixel_music_rhythm**: Music rhythm mode
+
+### Sensor Entities
+- **sensor.ipixel_connection_status**: Connection status
+- **sensor.ipixel_device_info**: Device information
+- **sensor.ipixel_current_mode**: Currently active display mode
+
+### Button Entities
+- **button.ipixel_clear_screen**: Clear the display
+- **button.ipixel_reload_config**: Reload configuration
+
+## Services
+
+### `ipixel_color.display_image`
+Display a custom image on the matrix.
+
+### `ipixel_color.display_animation`
+Display a GIF animation.
+
+### `ipixel_color.set_custom_clock`
+Configure custom clock display.
+
+### `ipixel_color.clear_screen`
+Clear the screen.
+
+### `ipixel_color.doodle_set_pixel`
+Set a single pixel in doodle mode.
+
+### `ipixel_color.music_rhythm`
+Enable music rhythm effect.
+
 ## Supported Devices
 
 - CHICIRIS 20×64 LED Panel
 - UDITER Pixel Rider
 - Generic 16×32, 16×64, 16×96, 20×64, 32×32 iPixel Color compatible panels
+
+## Troubleshooting
+
+### Connection Issues
+1. Ensure Bluetooth is enabled
+2. Check that the LED matrix is powered on
+3. Verify the matrix is not connected to another device
+
+### Display Not Updating
+1. Check connection status
+2. Verify the matrix is powered on
+3. Try clearing the screen
 
 ## Dashboard Cards
 
