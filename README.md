@@ -1,6 +1,6 @@
 # iPixel Color - Home Assistant Integration
 
-[![License: MIT](https://img.shields.io/badge/apache-2-0.svg)](https://opensource.org/license/apache-2-0)
+[![License: MIT](https://img.shields.io/badge/apache-2-0.svg)](https://opensource.org/licenses/apache-2-0)
 
 A complete Home Assistant custom integration for controlling iPixel Color LED matrix panels via Bluetooth LE and WiFi.
 
