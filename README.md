@@ -175,33 +175,6 @@ Enable music rhythm effect.
 2. Verify the matrix is powered on
 3. Try clearing the screen
 
-## Technical Details
-
-### Bluetooth Protocol
-
-The integration uses Bluetooth Low Energy (BLE) with the following characteristics:
-- **Service UUID**: `0000fee0-0000-1000-8000-00805f9b34fb`
-- **Write Characteristic**: `0000fee1-0000-1000-8000-00805f9b34fb`
-- **Read Characteristic**: `0000fee2-0000-1000-8000-00805f9b34fb`
-
-### Data Transmission
-
-- Images are sent in 12KB chunks with CRC32 verification
-- Maximum MTU size: 512 bytes
-- Color format: RGB (8-bit per channel)
-- Refresh rate: Up to 60 FPS for animations
-
-### Supported Commands
-
-The integration implements the following command set:
-- Power on/off
-- Set brightness
-- Set display mode
-- Send image data
-- Set text and effects
-- Get device information
-- Clear screen
-
 ## Development
 
 ### Contributing
