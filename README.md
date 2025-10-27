@@ -1,4 +1,4 @@
-**DISCLAIMER:**: This is a custom integration and is not officially affiliated with the iPixel Color manufacturer.
+**DISCLAIMER:** This is a custom integration and is not officially affiliated with the iPixel Color manufacturer.
 
 # iPixel Color - Home Assistant Integration
 
