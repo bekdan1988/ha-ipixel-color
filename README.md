@@ -1,3 +1,5 @@
+**DISCLAIMER:**: This is a custom integration and is not officially affiliated with the iPixel Color manufacturer.
+
 # iPixel Color - Home Assistant Integration
 
 [![License: MIT](https://img.shields.io/badge/apache-2-0.svg)](https://opensource.org/licenses/apache-2-0)
@@ -153,5 +155,3 @@ Apache License, Version 2.0 - see LICENSE file
 For issues, feature requests, or questions:
 - Open an issue on GitHub
 - Check the documentation
-
-**Note**: This is a custom integration and is not officially affiliated with the iPixel Color manufacturer.
