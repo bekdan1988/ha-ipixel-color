@@ -17,7 +17,7 @@ A complete Home Assistant custom integration for controlling iPixel Color LED ma
 - 🖼️ **Image & Animation** - display custom images and GIFs
 - 🎨 **Doodle Mode** - pixel-by-pixel drawing
 
-### Prerequisites
+## Prerequisites
 - Home Assistant 2024.1.0 or newer
 - Bluetooth adapter with BLE support (for BLE connection)
 - WiFi network (for WiFi connection)
