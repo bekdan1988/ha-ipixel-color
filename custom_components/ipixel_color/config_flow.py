@@ -31,8 +31,8 @@ LANGUAGES: list[tuple[str, str]] = [
 
 CONF_LANGUAGE: Final = "language"
 
-DEFAULT_WIDTH: Final = 16
-DEFAULT_HEIGHT: Final = 64
+DEFAULT_WIDTH: Final = 96
+DEFAULT_HEIGHT: Final = 16
 DEFAULT_ORIENTATION: Final = 0
 
 SETUP_SCHEMA = vol.Schema(
