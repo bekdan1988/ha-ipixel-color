@@ -130,16 +130,6 @@ Enable music rhythm effect.
 2. Verify the matrix is powered on
 3. Try clearing the screen
 
-## Development
-
-### Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
 ## License
 
 Apache License, Version 2.0 - see LICENSE file
