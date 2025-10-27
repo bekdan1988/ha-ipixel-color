@@ -2,7 +2,7 @@
   "domain": "ipixel_color",
   "name": "iPixel Color",
   "version": "1.0.0",
-  "documentation": "https://github.com/bekdan1988/ipixel-color-homeassistant",
+  "documentation": "https://github.com/bekdan1988/ha-ipixel-color",
   "codeowners": [
     "@bekdan1988"
   ],
