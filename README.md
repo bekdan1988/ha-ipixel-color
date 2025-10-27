@@ -67,3 +67,5 @@ Apache License, Version 2.0 - see LICENSE file
 
 - [GitHub Issues](https://github.com/bekdan1988/ha-ipixel-color/issues)
 - [Home Assistant Community](https://community.home-assistant.io/)
+
+**Note**: This is a custom integration and is not officially affiliated with the iPixel Color manufacturer.
