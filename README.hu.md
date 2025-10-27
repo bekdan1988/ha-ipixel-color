@@ -1,6 +1,6 @@
 # iPixel Color - Home Assistant Integráció
 
-[![Licenc: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Licenc: MIT](https://img.shields.io/badge/apache-2-0.svg)](https://opensource.org/license/apache-2-0)
 
 Teljes körű Home Assistant egyedi integráció iPixel Color LED mátrix panelek vezérléséhez Bluetooth LE és WiFi kapcsolaton keresztül.
 
@@ -61,7 +61,7 @@ Lásd a `README.md` fájlt a használatra kész Lovelace kártya példákért.
 
 ## Licenc
 
-MIT Licenc - lásd LICENSE fájl
+Apache License, Version 2.0 - lásd LICENSE fájl
 
 ## Támogatás
 
