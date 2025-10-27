@@ -58,53 +58,6 @@ A complete Home Assistant custom integration for controlling iPixel Color LED ma
    - Configure connectivity (BLE or WiFi)
 5. Use **Options** menu to customize anytime
 
-### Dashboard Control Cards
-
-All main settings of the integration can be modified directly from the Dashboard using these cards:
-
-#### Native Entities Card (no custom frontend needed)
-
-type: entities
-title: iPixel Color – Controls
-entities:
-  - entity: light.ipixel_matrix
-    type: section
-    label: Mode and clock
-  - entity: select.ipixel_display_mode
-  - entity: select.ipixel_clock_format
-  - entity: switch.ipixel_show_date
-  - entity: switch.ipixel_show_seconds
-    type: section
-    label: Text and effects
-  - entity: text.ipixel_display_text
-  - entity: select.ipixel_text_effect
-  - entity: select.ipixel_visual_effect
-  - entity: number.ipixel_scroll_speed
-  - entity: number.ipixel_effect_speed
-    type: section
-    label: Brightness
-  - entity: number.ipixel_brightness
-    type: buttons
-    entities:
-  - entity: button.ipixel_clear_screen
-  - entity: button.ipixel_reload_config
-
-#### Mushroom Cards (HACS: lovelace-mushroom)
-type: vertical-stack
-cards:
-  - type: custom:mushroom-light-card
-    entity: light.ipixel_matrix
-    name: Matrix
-    show_brightness_control: true
-    use_light_color: true
-  - type: custom:mushroom-select-card
-    entity: select.ipixel_display_mode
-    name: Mode
-  - type: custom:mushroom-number-card
-    entity: number.ipixel_brightness
-    name: Brightness
-    display_mode: slider
-
 ## Created Entities
 
 After setup, the following entities will be created:
