@@ -86,8 +86,8 @@ entities:
   - entity: number.ipixel_brightness
     type: buttons
     entities:
-      - entity: button.ipixel_clear_screen
-      - entity: button.ipixel_reload_config
+  - entity: button.ipixel_clear_screen
+  - entity: button.ipixel_reload_config
 
 #### Mushroom Cards (HACS: lovelace-mushroom)
 type: vertical-stack
