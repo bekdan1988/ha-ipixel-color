@@ -7,7 +7,6 @@ Teljes körű Home Assistant egyedi integráció iPixel Color LED mátrix panele
 ## Jellemzők
 
 - 🎨 **Teljes iPixel Color App Funkcióparitás**
-- 🌐 **35+ Nyelv Támogatása** teljes lokalizációval
 - ⚙️ **GUI-ból Testreszabható** - minden beállítás Opciók menüből, YAML nélkül
 - 📊 **Dashboard Kártyák** - használatra kész Lovelace kártyák
 - 🔌 **BLE és WiFi Támogatás** - rugalmas kapcsolódás
