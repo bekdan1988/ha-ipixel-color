@@ -199,7 +199,6 @@ Apache License, Version 2.0 - see LICENSE file
 
 For issues, feature requests, or questions:
 - Open an issue on GitHub
-- Visit the Home Assistant Community forum
 - Check the documentation
 
 **Note**: This is a custom integration and is not officially affiliated with the iPixel Color manufacturer.
