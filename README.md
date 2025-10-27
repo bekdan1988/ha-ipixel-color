@@ -15,6 +15,18 @@ A complete Home Assistant custom integration for controlling iPixel Color LED ma
 - 🖼️ **Image & Animation** - display custom images and GIFs
 - 🎨 **Doodle Mode** - pixel-by-pixel drawing
 
+### Prerequisites
+- Home Assistant 2024.1.0 or newer
+- Bluetooth adapter with BLE support (for BLE connection)
+- WiFi network (for WiFi connection)
+- iPixel Color LED matrix panel
+  
+## Supported Devices
+
+- CHICIRIS 20×64 LED Panel
+- UDITER Pixel Rider
+- Generic 16×32, 16×64, 16×96, 20×64, 32×32 iPixel Color compatible panels
+
 ## Installation
 
 ### Via HACS (Recommended)
@@ -35,6 +47,8 @@ A complete Home Assistant custom integration for controlling iPixel Color LED ma
 
 ## Configuration
 
+### Setup via UI
+
 1. Go to Settings → Devices & Services
 2. Click "+ Add Integration"
 3. Search for "iPixel Color"
@@ -43,6 +57,53 @@ A complete Home Assistant custom integration for controlling iPixel Color LED ma
    - Select matrix size
    - Configure connectivity (BLE or WiFi)
 5. Use **Options** menu to customize anytime
+
+### Dashboard Control Cards
+
+All main settings of the integration can be modified directly from the Dashboard using these cards:
+
+#### Native Entities Card (no custom frontend needed)
+
+type: entities
+title: iPixel Color – Controls
+entities:
+  - entity: light.ipixel_matrix
+    type: section
+    label: Mode and clock
+  - entity: select.ipixel_display_mode
+  - entity: select.ipixel_clock_format
+  - entity: switch.ipixel_show_date
+  - entity: switch.ipixel_show_seconds
+    type: section
+    label: Text and effects
+  - entity: text.ipixel_display_text
+  - entity: select.ipixel_text_effect
+  - entity: select.ipixel_visual_effect
+  - entity: number.ipixel_scroll_speed
+  - entity: number.ipixel_effect_speed
+    type: section
+    label: Brightness
+  - entity: number.ipixel_brightness
+    type: buttons
+    entities:
+      - entity: button.ipixel_clear_screen
+      - entity: button.ipixel_reload_config
+
+#### Mushroom Cards (HACS: lovelace-mushroom)
+type: vertical-stack
+cards:
+  - type: custom:mushroom-light-card
+    entity: light.ipixel_matrix
+    name: Matrix
+    show_brightness_control: true
+    use_light_color: true
+  - type: custom:mushroom-select-card
+    entity: select.ipixel_display_mode
+    name: Mode
+  - type: custom:mushroom-number-card
+    entity: number.ipixel_brightness
+    name: Brightness
+    display_mode: slider
 
 ## Created Entities
 
@@ -102,12 +163,6 @@ Set a single pixel in doodle mode.
 ### `ipixel_color.music_rhythm`
 Enable music rhythm effect.
 
-## Supported Devices
-
-- CHICIRIS 20×64 LED Panel
-- UDITER Pixel Rider
-- Generic 16×32, 16×64, 16×96, 20×64, 32×32 iPixel Color compatible panels
-
 ## Troubleshooting
 
 ### Connection Issues
@@ -120,22 +175,58 @@ Enable music rhythm effect.
 2. Verify the matrix is powered on
 3. Try clearing the screen
 
-## Dashboard Cards
+## Technical Details
 
-See `README.md` for ready-to-use Lovelace card examples.
+### Bluetooth Protocol
 
-## Documentation
+The integration uses Bluetooth Low Energy (BLE) with the following characteristics:
+- **Service UUID**: `0000fee0-0000-1000-8000-00805f9b34fb`
+- **Write Characteristic**: `0000fee1-0000-1000-8000-00805f9b34fb`
+- **Read Characteristic**: `0000fee2-0000-1000-8000-00805f9b34fb`
 
-- [English Documentation](README.md)
-- [Magyar dokumentáció](README.hu.md)
+### Data Transmission
+
+- Images are sent in 12KB chunks with CRC32 verification
+- Maximum MTU size: 512 bytes
+- Color format: RGB (8-bit per channel)
+- Refresh rate: Up to 60 FPS for animations
+
+### Supported Commands
+
+The integration implements the following command set:
+- Power on/off
+- Set brightness
+- Set display mode
+- Send image data
+- Set text and effects
+- Get device information
+- Clear screen
+
+## Development
+
+### Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
 ## License
 
 Apache License, Version 2.0 - see LICENSE file
 
+## Credits
+
+- Developed for Home Assistant
+- Based on reverse engineering of the iPixel Color app protocol
+- Uses the Bleak library for Bluetooth communication
+  
 ## Support
 
-- [GitHub Issues](https://github.com/bekdan1988/ha-ipixel-color/issues)
-- [Home Assistant Community](https://community.home-assistant.io/)
+For issues, feature requests, or questions:
+- Open an issue on GitHub
+- Visit the Home Assistant Community forum
+- Check the documentation
 
 **Note**: This is a custom integration and is not officially affiliated with the iPixel Color manufacturer.
