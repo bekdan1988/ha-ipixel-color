@@ -7,7 +7,6 @@ A complete Home Assistant custom integration for controlling iPixel Color LED ma
 ## Features
 
 - 🎨 **Full iPixel Color App Feature Parity**
-- 🌐 **35+ Language Support** with complete localization
 - ⚙️ **GUI Customizable** - all settings via Options menu, no YAML needed
 - 📊 **Dashboard Cards** - ready-to-use Lovelace cards
 - 🔌 **BLE & WiFi Support** - flexible connectivity
