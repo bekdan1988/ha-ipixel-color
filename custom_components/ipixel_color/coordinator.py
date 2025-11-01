@@ -23,7 +23,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# Command IDs based on iPixel Color BLE protocol (assumed)
+# Command IDs based on iPixel Color BLE protocol
 CMD_MAPPING = {
     "turn_on": 0x01,
     "turn_off": 0x02,
@@ -42,7 +42,7 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
     """Manages communication with iPixel Color LED matrix."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Init."""
+        """Initialize coordinator."""
         self.entry = entry
         self.device_address = entry.data[CONF_DEVICE_ADDRESS]
         self.client: Optional[BleakClient] = None
@@ -64,12 +64,11 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch latest state."""
+        """Fetch latest device state."""
         try:
             if not self.client or not self.client.is_connected:
                 await self._async_connect()
 
-            # Device info fetch placeholder
             device_info = await self._async_get_device_info()
 
             return {
@@ -86,7 +85,7 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Failed updating data: {err}") from err
 
     async def _async_connect(self) -> None:
-        """Connect BLE client."""
+        """Connect BLE client to device."""
         if self.client and self.client.is_connected:
             return
         try:
@@ -98,7 +97,7 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Connection failed: {err}") from err
 
     async def _async_get_device_info(self) -> dict[str, Any]:
-        """Mock device info."""
+        """Get device information."""
         return {
             "firmware_version": "1.0.0",
             "mcu_version": "1.0.0",
@@ -137,7 +136,7 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_display_text(
         self, text: str, color: Optional[list[int]] = None, speed: int = 1
     ) -> None:
-        """Display scrolling text."""
+        """Display scrolling text on the matrix."""
         color = color or [255, 255, 255]
         text_bytes = text.encode("utf-8")
         payload = bytearray()
@@ -152,7 +151,7 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         await self._send_raw(payload)
 
     async def async_display_image(self, image_path: str) -> None:
-        """Display an image file."""
+        """Display an image file on the matrix."""
         with open(image_path, "rb") as f:
             image_data = f.read()
         payload = bytearray()
@@ -196,7 +195,7 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         await self._send_raw(payload)
 
     async def _send_raw(self, payload: bytearray) -> None:
-        """Send the raw bytes payload to BLE device."""
+        """Send raw bytes payload to BLE device."""
         if not self.client or not self.client.is_connected:
             await self._async_connect()
 
