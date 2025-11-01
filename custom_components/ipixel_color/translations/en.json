@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Select iPixel Color Device",
+        "description": "Select your iPixel Color LED matrix from the list of discovered devices.",
+        "data": {
+          "device_address": "Device"
+        }
+      },
+      "device_config": {
+        "title": "Configure Display",
+        "description": "Configure your iPixel Color display settings.",
+        "data": {
+          "device_name": "Device Name",
+          "display_width": "Display Width (pixels)",
+          "display_height": "Display Height (pixels)",
+          "update_interval": "Update Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "device_not_found": "Selected device not found",
+      "cannot_connect": "Failed to connect to device",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "no_devices_found": "No iPixel Color devices found"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iPixel Color Options",
+        "description": "Configure integration options.",
+        "data": {
+          "update_interval": "Update Interval (seconds)"
+        }
+      }
+    }
+  }
+}
