@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Select Bluetooth Device",
-        "description": "Select your LED matrix panel from the list of discovered Bluetooth devices. If you are unsure which one to choose, check the device name in your phone’s Bluetooth menu or user guide.",
+        "description": "Select your LED matrix panel from all discovered Bluetooth devices.",
         "data": {
           "device_address": "Device"
         }
