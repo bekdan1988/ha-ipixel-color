@@ -47,18 +47,19 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             address = user_input[CONF_DEVICE_ADDRESS]
             device = self._discovered_devices.get(address)
-            
+
             if device is None:
                 errors["base"] = "device_not_found"
             else:
                 await self.async_set_unique_id(address)
                 self._abort_if_unique_id_configured()
-                
+
                 self._selected_device = device
                 return await self.async_step_device_config()
 
+        # Discover ALL Bluetooth devices (no filtering on name)
         discovered_devices = await self._async_discover_devices()
-        
+
         if not discovered_devices:
             return self.async_abort(reason="no_devices_found")
 
@@ -75,6 +76,9 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+            description_placeholders={
+                "select_tip": "Válaszd ki a LED mátrixot a Bluetooth eszközök listájából. Ha nem tudod melyik az, nézd meg mobilon vagy dokumentációban!"
+            },
         )
 
     async def async_step_device_config(
@@ -105,7 +109,7 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(
                         CONF_DEVICE_NAME,
-                        default=self._selected_device.name or "iPixel Color Display",
+                        default=self._selected_device.name or "LED mátrix panel",
                     ): cv.string,
                     vol.Required(
                         CONF_DISPLAY_WIDTH, default=DEFAULT_WIDTH
@@ -122,15 +126,14 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def _async_discover_devices(self) -> dict[str, BLEDevice]:
-        """Discover iPixel Color devices via Bluetooth."""
-        _LOGGER.debug("Discovering iPixel Color devices")
-        
+        """Discover ALL Bluetooth devices via Home Assistant or Bleak."""
+        _LOGGER.debug("Discovering ALL Bluetooth devices via HA/Bleak")
         discovered = {}
-        
+        # If Home Assistant Bluetooth integration is available
         if bluetooth.async_scanner_count(self.hass) > 0:
             devices = bluetooth.async_discovered_service_info(self.hass)
             for device_info in devices:
-                if device_info.name and "LED" in device_info.name.lower():
+                if device_info.name:  # List all named Bluetooth devices!
                     discovered[device_info.address] = BLEDevice(
                         address=device_info.address,
                         name=device_info.name,
@@ -138,11 +141,12 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         rssi=device_info.rssi,
                     )
         else:
+            # Fallback to direct Bleak scan if needed
             devices = await BleakScanner.discover(timeout=10.0)
             for device in devices:
-                if device.name and "ipixel" in device.name.lower():
+                if device.name:
                     discovered[device.address] = device
-        
+
         self._discovered_devices = discovered
         return discovered
 
