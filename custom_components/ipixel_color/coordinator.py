@@ -5,6 +5,7 @@ from datetime import timedelta
 import logging
 from typing import Any, Optional
 
+import binascii
 from bleak import BleakClient, BleakError
 
 from homeassistant.config_entries import ConfigEntry
@@ -16,12 +17,15 @@ from .const import (
     CONF_DEVICE_ADDRESS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
-    SERVICE_UUID,
     CHARACTERISTIC_WRITE,
-    CHARACTERISTIC_NOTIFY,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def crc32(data: bytes) -> int:
+    """Calculate CRC32 checksum."""
+    return binascii.crc32(data) & 0xFFFFFFFF
 
 
 class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
@@ -123,9 +127,61 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
     ) -> None:
         """Display text on the matrix."""
         color = color or [255, 255, 255]
-        # TODO: Encode the text command per iPixel Color BLE protocol and send
-        _LOGGER.debug(f"Displaying text: '{text}' with color {color} and speed {speed}")
-        # Example: await self._send_ble_command(constructed_bytes)
+        # Command IDs example mapping
+        CMD_MAPPING = {
+            "display_text": 0x04,
+        }
+        cmd_id = CMD_MAPPING["display_text"]
+        payload = bytearray()
+        payload.append(cmd_id)
+        payload.append(speed)
+        payload.extend(color[:3])
+        text_bytes = text.encode('utf-8')
+        payload.append(len(text_bytes))
+        payload.extend(text_bytes)
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, 'little'))
+        await self._send_ble_command(payload)
 
     async def async_display_image(self, image_path: str) -> None:
-        """Display image
+        """Display image on the matrix."""
+        # Read image bytes
+        with open(image_path, "rb") as img_file:
+            image_data = img_file.read()
+        CMD_MAPPING = {
+            "display_image": 0x05,
+        }
+        cmd_id = CMD_MAPPING["display_image"]
+        payload = bytearray()
+        payload.append(cmd_id)
+        payload.extend(image_data)
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, 'little'))
+        await self._send_ble_command(payload)
+
+    async def async_display_animation(self, animation_name: str) -> None:
+        """Play a built-in animation."""
+        CMD_MAPPING = {
+            "display_animation": 0x06,
+        }
+        cmd_id = CMD_MAPPING["display_animation"]
+        payload = bytearray()
+        payload.append(cmd_id)
+        anim_bytes = animation_name.encode('utf-8')
+        payload.append(len(anim_bytes))
+        payload.extend(anim_bytes)
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, 'little'))
+        await self._send_ble_command(payload)
+
+    async def _send_ble_command(self, payload: bytearray) -> None:
+        """Write the command payload to BLE device."""
+        if self.client is None or not self.client.is_connected:
+            await self._async_connect()
+        _LOGGER.debug("Sending BLE command: %s", payload.hex())
+        await self.client.write_gatt_char(CHARACTERISTIC_WRITE, payload)
+
+    async def async_shutdown(self) -> None:
+        """Shutdown coordinator cleanly."""
+        if self.client and self.client.is_connected:
+            await self.client.disconnect()
