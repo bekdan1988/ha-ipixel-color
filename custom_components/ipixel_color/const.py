@@ -15,7 +15,43 @@ DEFAULT_UPDATE_INTERVAL: Final = 30
 DEFAULT_WIDTH: Final = 32
 DEFAULT_HEIGHT: Final = 32
 
-# BLE characteristics (UUID-k)
+# BLE characteristics
 SERVICE_UUID: Final = "0000fff0-0000-1000-8000-00805f9b34fb"
 CHARACTERISTIC_WRITE: Final = "0000fff3-0000-1000-8000-00805f9b34fb"
 CHARACTERISTIC_NOTIFY: Final = "0000fff4-0000-1000-8000-00805f9b34fb"
+
+# Display modes
+DISPLAY_MODE_TEXT: Final = "text"
+DISPLAY_MODE_IMAGE: Final = "image"
+DISPLAY_MODE_CLOCK: Final = "clock"
+DISPLAY_MODE_ANIMATION: Final = "animation"
+DISPLAY_MODE_DIY: Final = "diy"
+DISPLAY_MODE_OFF: Final = "off"
+
+DISPLAY_MODES: Final = [
+    DISPLAY_MODE_TEXT,
+    DISPLAY_MODE_IMAGE,
+    DISPLAY_MODE_CLOCK,
+    DISPLAY_MODE_ANIMATION,
+    DISPLAY_MODE_DIY,
+    DISPLAY_MODE_OFF,
+]
+
+# Effects
+EFFECT_STATIC: Final = "static"
+EFFECT_SCROLL_LEFT: Final = "scroll_left"
+EFFECT_SCROLL_RIGHT: Final = "scroll_right"
+EFFECT_SCROLL_UP: Final = "scroll_up"
+EFFECT_SCROLL_DOWN: Final = "scroll_down"
+EFFECT_BLINK: Final = "blink"
+EFFECT_FADE: Final = "fade"
+
+EFFECTS: Final = [
+    EFFECT_STATIC,
+    EFFECT_SCROLL_LEFT,
+    EFFECT_SCROLL_RIGHT,
+    EFFECT_SCROLL_UP,
+    EFFECT_SCROLL_DOWN,
+    EFFECT_BLINK,
+    EFFECT_FADE,
+]
