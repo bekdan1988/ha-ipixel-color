@@ -1,4 +1,4 @@
-"""Complete iPixel Color integration coordinator with refined BLE protocol handling."""
+"""Complete iPixel Color integration coordinator with BLE discovery."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import Any, Optional
 
 import binascii
 from bleak import BleakClient, BleakError
+from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -18,7 +19,6 @@ from .const import (
     CONF_DEVICE_ADDRESS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
-    CHARACTERISTIC_WRITE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         self.entry = entry
         self.device_address = entry.data[CONF_DEVICE_ADDRESS]
         self.client: Optional[BleakClient] = None
+        self.write_characteristic: Optional[BleakGATTCharacteristic] = None
         self._is_on = False
         self._brightness = 255
         self._rgb_color = (255, 255, 255)
@@ -92,9 +93,42 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
             self.client = BleakClient(self.device_address)
             await self.client.connect()
             _LOGGER.info("Connected to device at %s", self.device_address)
+            
+            # Discover and find writable characteristic
+            await self._discover_characteristics()
+            
         except BleakError as err:
             _LOGGER.error("Connection failed: %s", err)
             raise UpdateFailed(f"Connection failed: {err}") from err
+
+    async def _discover_characteristics(self) -> None:
+        """Discover available characteristics on the device."""
+        if not self.client or not self.client.is_connected:
+            _LOGGER.error("Client not connected for characteristic discovery")
+            return
+
+        try:
+            services = self.client.services
+            _LOGGER.info("Discovering BLE services and characteristics...")
+            
+            for service in services:
+                _LOGGER.debug(f"Service: {service.uuid}")
+                for char in service.characteristics:
+                    _LOGGER.debug(
+                        f"  Characteristic: {char.uuid}, "
+                        f"Properties: {char.properties}"
+                    )
+                    
+                    # Look for writable characteristic
+                    if "write" in char.properties or "write-without-response" in char.properties:
+                        self.write_characteristic = char
+                        _LOGGER.info(
+                            f"Found writable characteristic: {char.uuid} "
+                            f"with properties: {char.properties}"
+                        )
+                        
+        except Exception as err:
+            _LOGGER.error("Failed to discover characteristics: %s", err)
 
     async def _async_get_device_info(self) -> dict[str, Any]:
         """Get device information."""
@@ -114,99 +148,3 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         if brightness is not None:
             self._brightness = brightness
         if rgb_color is not None:
-            self._rgb_color = rgb_color
-        if effect is not None:
-            self._effect = effect
-
-        await self._send_command("turn_on")
-        await self.async_request_refresh()
-
-    async def async_turn_off(self) -> None:
-        """Turn off light."""
-        self._is_on = False
-        await self._send_command("turn_off")
-        await self.async_request_refresh()
-
-    async def async_set_display_mode(self, mode: str) -> None:
-        """Change display mode."""
-        self._display_mode = mode
-        await self._send_command("set_mode", {"mode": mode})
-        await self.async_request_refresh()
-
-    async def async_display_text(
-        self, text: str, color: Optional[list[int]] = None, speed: int = 1
-    ) -> None:
-        """Display scrolling text on the matrix."""
-        color = color or [255, 255, 255]
-        text_bytes = text.encode("utf-8")
-        payload = bytearray()
-        payload.append(CMD_MAPPING["display_text"])
-        payload.append(speed)  # Speed byte
-        payload.extend(color[:3])  # RGB color bytes
-        payload.append(len(text_bytes))
-        payload.extend(text_bytes)
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
-
-    async def async_display_image(self, image_path: str) -> None:
-        """Display an image file on the matrix."""
-        with open(image_path, "rb") as f:
-            image_data = f.read()
-        payload = bytearray()
-        payload.append(CMD_MAPPING["display_image"])
-        payload.extend(image_data)
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
-
-    async def async_display_animation(self, animation_name: str) -> None:
-        """Play a predefined animation."""
-        anim_bytes = animation_name.encode("utf-8")
-        payload = bytearray()
-        payload.append(CMD_MAPPING["display_animation"])
-        payload.append(len(anim_bytes))
-        payload.extend(anim_bytes)
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
-
-    async def _send_command(self, command: str, params: Optional[dict[str, Any]] = None) -> None:
-        """Construct and send a command with optional parameters."""
-        cmd_id = CMD_MAPPING.get(command)
-        if cmd_id is None:
-            _LOGGER.error("Unknown command: %s", command)
-            return
-
-        payload = bytearray([cmd_id])
-
-        if params:
-            if command == "set_mode":
-                mode_bytes = params.get("mode", "").encode("utf-8")
-                payload.append(len(mode_bytes))
-                payload.extend(mode_bytes)
-
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
-
-    async def _send_raw(self, payload: bytearray) -> None:
-        """Send raw bytes payload to BLE device."""
-        if not self.client or not self.client.is_connected:
-            await self._async_connect()
-
-        try:
-            _LOGGER.debug("Sending to BLE: %s", payload.hex())
-            await self.client.write_gatt_char(CHARACTERISTIC_WRITE, payload)
-        except Exception as err:
-            _LOGGER.error("Failed to send BLE command: %s", err)
-            raise UpdateFailed(f"Failed to send BLE command: {err}") from err
-
-    async def async_shutdown(self) -> None:
-        """Disconnect cleanly."""
-        if self.client and self.client.is_connected:
-            await self.client.disconnect()
