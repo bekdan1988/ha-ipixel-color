@@ -4,11 +4,14 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import voluptuous as vol
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
+import homeassistant.helpers.config_validation as cv
 
 from .const import DOMAIN, CONF_DEVICE_ADDRESS
 from .coordinator import IPixelColorDataUpdateCoordinator
@@ -19,10 +22,55 @@ PLATFORMS: list[Platform] = [
     Platform.LIGHT,
     Platform.SWITCH,
     Platform.SENSOR,
-    Platform.SELECT,
-    Platform.NUMBER,
 ]
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the integration and register services."""
+
+    async def handle_display_text(service_call: Any) -> None:
+        entity_id = service_call.data.get("entity_id")
+        text = service_call.data.get("text")
+        color = service_call.data.get("color")
+        speed = service_call.data.get("speed", 1)
+
+        # Find coordinator for the entity
+        coordinator = None
+        for entry_id, coord in hass.data.get(DOMAIN, {}).items():
+            # We assume one light per entry, verify entity_id matches
+            light_entity_id = f"light.{DOMAIN}_display"
+            if entity_id == light_entity_id:
+                coordinator = coord
+                break
+
+        if coordinator is None:
+            _LOGGER.error("Coordinator not found for entity %s", entity_id)
+            return
+
+        # Call the async_display_text method of coordinator
+        try:
+            await coordinator.async_display_text(text=text, color=color, speed=speed)
+            _LOGGER.info("Displayed text '%s' on %s", text, entity_id)
+        except Exception as err:
+            _LOGGER.error("Error displaying text on %s: %s", entity_id, err)
+
+    hass.services.async_register(
+        DOMAIN,
+        "display_text",
+        handle_display_text,
+        schema=vol.Schema(
+            {
+                vol.Required("entity_id"): cv.entity_id,
+                vol.Required("text"): cv.string,
+                vol.Optional("color"): vol.All(
+                    cv.ensure_list,
+                    [vol.All(vol.Coerce(int), vol.Range(min=0, max=255))],
+                ),
+                vol.Optional("speed", default=1): vol.All(vol.Coerce(int), vol.Range(min=1, max=10)),
+            }
+        ),
+    )
+
+    return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up iPixel Color from a config entry."""
