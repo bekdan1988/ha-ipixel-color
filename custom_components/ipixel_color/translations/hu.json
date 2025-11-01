@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Bluetooth Eszköz Kiválasztása",
-        "description": "Válaszd ki a LED mátrix paneled a felfedezett Bluetooth eszközök listájából. Ha nem vagy biztos benne, melyik az, nézd meg a készülék nevét a telefonod Bluetooth menüjében vagy a használati útmutatóban.",
+        "description": "Válaszd ki a LED mátrix paneldet az összes felfedezett Bluetooth eszközből.",
         "data": {
           "device_address": "Eszköz"
         }
