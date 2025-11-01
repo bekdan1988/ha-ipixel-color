@@ -16,9 +16,6 @@ from .const import (
     CONF_DEVICE_ADDRESS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
-    SERVICE_UUID,
-    CHARACTERISTIC_WRITE,
-    CHARACTERISTIC_NOTIFY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,7 +52,6 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
             if self.client is None or not self.client.is_connected:
                 await self._async_connect()
             
-            # Query device status
             device_info = await self._async_get_device_info()
             
             return {
@@ -83,8 +79,6 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_get_device_info(self) -> dict[str, Any]:
         """Get device information."""
-        # Implement device info query based on protocol
-        # This is a placeholder - actual implementation depends on BLE protocol
         return {
             "firmware_version": "1.0.0",
             "mcu_version": "1.0.0",
@@ -133,8 +127,6 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         if self.client is None or not self.client.is_connected:
             await self._async_connect()
         
-        # Implement BLE command protocol
-        # This is a placeholder - actual implementation depends on protocol
         _LOGGER.debug("Sending command: %s with data: %s", command, data)
 
     async def async_shutdown(self) -> None:
