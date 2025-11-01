@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import voluptuous as vol
 
@@ -62,74 +62,3 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         await coordinator.async_display_image(image_path)
 
     async def handle_display_animation(service_call: Any) -> None:
-        entity_id = service_call.data["entity_id"]
-        animation = service_call.data["animation"]
-
-        coordinator = None
-        for coord in hass.data.get(DOMAIN, {}).values():
-            if hasattr(coord, "async_display_animation"):
-                coordinator = coord
-                break
-
-        if coordinator is None:
-            _LOGGER.error("Coordinator not found to display animation")
-            return
-
-        await coordinator.async_display_animation(animation)
-
-    hass.services.async_register(
-        DOMAIN,
-        "display_text",
-        handle_display_text,
-        schema=vol.Schema(
-            {
-                vol.Required("entity_id"): cv.entity_id,
-                vol.Required("text"): cv.string,
-                vol.Optional("color"): vol.All(
-                    cv.ensure_list,
-                    [vol.All(vol.Coerce(int), vol.Range(min=0, max=255))],
-                ),
-                vol.Optional("speed", default=1): vol.All(vol.Coerce(int), vol.Range(min=1, max=10)),
-            }
-        ),
-    )
-    hass.services.async_register(
-        DOMAIN,
-        "display_image",
-        handle_display_image,
-        schema=vol.Schema(
-            {
-                vol.Required("entity_id"): cv.entity_id,
-                vol.Required("image_path"): cv.string,
-            }
-        ),
-    )
-    hass.services.async_register(
-        DOMAIN,
-        "display_animation",
-        handle_display_animation,
-        schema=vol.Schema(
-            {
-                vol.Required("entity_id"): cv.entity_id,
-                vol.Required("animation"): cv.string,
-            }
-        ),
-    )
-
-    return True
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    
-    if unload_ok:
-        coordinator: IPixelColorDataUpdateCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
-        await coordinator.async_shutdown()
-    
-    return unload_ok
-
-
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload config entry."""
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
