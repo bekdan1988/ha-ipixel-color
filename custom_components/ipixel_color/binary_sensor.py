@@ -1,1 +1,0 @@
-# Binary sensor stub

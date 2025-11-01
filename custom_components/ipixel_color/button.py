@@ -1,1 +1,0 @@
-# Button entities stub
