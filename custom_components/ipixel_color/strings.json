@@ -2,15 +2,15 @@
   "config": {
     "step": {
       "user": {
-        "title": "Select iPixel Color Device",
-        "description": "Select your iPixel Color LED matrix from the list of discovered devices.",
+        "title": "Select Bluetooth Device",
+        "description": "Select your LED matrix panel from the list of discovered Bluetooth devices. If you are unsure which one to choose, check the device name in your phone’s Bluetooth menu or user guide.",
         "data": {
           "device_address": "Device"
         }
       },
       "device_config": {
         "title": "Configure Display",
-        "description": "Configure your iPixel Color display settings.",
+        "description": "Configure your LED matrix display settings.",
         "data": {
           "device_name": "Device Name",
           "display_width": "Display Width (pixels)",
@@ -26,13 +26,13 @@
     },
     "abort": {
       "already_configured": "Device is already configured",
-      "no_devices_found": "No iPixel Color devices found"
+      "no_devices_found": "No Bluetooth devices found"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "iPixel Color Options",
+        "title": "LED Matrix Options",
         "description": "Configure integration options.",
         "data": {
           "update_interval": "Update Interval (seconds)"
