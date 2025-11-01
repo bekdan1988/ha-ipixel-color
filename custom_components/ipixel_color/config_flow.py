@@ -77,7 +77,7 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             errors=errors,
             description_placeholders={
-                "select_tip": "Válaszd ki a LED mátrixot a Bluetooth eszközök listájából. Ha nem tudod melyik az, nézd meg mobilon vagy dokumentációban!"
+                "select_tip": "Select the LED matrix device from all Bluetooth devices in the list."
             },
         )
 
@@ -127,13 +127,13 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _async_discover_devices(self) -> dict[str, BLEDevice]:
         """Discover ALL Bluetooth devices via Home Assistant or Bleak."""
-        _LOGGER.debug("Discovering ALL Bluetooth devices via HA/Bleak")
+        _LOGGER.debug("Discovering ALL Bluetooth devices via HA or Bleak")
         discovered = {}
-        # If Home Assistant Bluetooth integration is available
+        # Use Home Assistant Bluetooth integration if available
         if bluetooth.async_scanner_count(self.hass) > 0:
             devices = bluetooth.async_discovered_service_info(self.hass)
             for device_info in devices:
-                if device_info.name:  # List all named Bluetooth devices!
+                if device_info.name:
                     discovered[device_info.address] = BLEDevice(
                         address=device_info.address,
                         name=device_info.name,
@@ -141,7 +141,6 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         rssi=device_info.rssi,
                     )
         else:
-            # Fallback to direct Bleak scan if needed
             devices = await BleakScanner.discover(timeout=10.0)
             for device in devices:
                 if device.name:
