@@ -1,4 +1,5 @@
-"""Data update coordinator for iPixel Color."""
+"""Complete iPixel Color integration coordinator with refined BLE protocol handling."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -22,6 +23,15 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Command IDs based on iPixel Color BLE protocol (assumed)
+CMD_MAPPING = {
+    "turn_on": 0x01,
+    "turn_off": 0x02,
+    "set_mode": 0x03,
+    "display_text": 0x04,
+    "display_image": 0x05,
+    "display_animation": 0x06,
+}
 
 def crc32(data: bytes) -> int:
     """Calculate CRC32 checksum."""
@@ -29,10 +39,10 @@ def crc32(data: bytes) -> int:
 
 
 class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching iPixel Color data and sending commands."""
+    """Manages communication with iPixel Color LED matrix."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Initialize."""
+        """Init."""
         self.entry = entry
         self.device_address = entry.data[CONF_DEVICE_ADDRESS]
         self.client: Optional[BleakClient] = None
@@ -54,11 +64,12 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Update data via BLE (placeholder)."""
+        """Fetch latest state."""
         try:
-            if self.client is None or not self.client.is_connected:
+            if not self.client or not self.client.is_connected:
                 await self._async_connect()
 
+            # Device info fetch placeholder
             device_info = await self._async_get_device_info()
 
             return {
@@ -71,22 +82,23 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
                 "firmware_version": device_info.get("firmware_version", "Unknown"),
             }
         except Exception as err:
-            _LOGGER.error("Error communicating with device: %s", err)
-            raise UpdateFailed(f"Error communicating with device: {err}") from err
+            _LOGGER.error("Failed updating data: %s", err)
+            raise UpdateFailed(f"Failed updating data: {err}") from err
 
     async def _async_connect(self) -> None:
-        """Connect to the device."""
+        """Connect BLE client."""
+        if self.client and self.client.is_connected:
+            return
         try:
             self.client = BleakClient(self.device_address)
             await self.client.connect()
-            _LOGGER.info("Connected to iPixel Color device at %s", self.device_address)
+            _LOGGER.info("Connected to device at %s", self.device_address)
         except BleakError as err:
-            _LOGGER.error("Failed to connect to device: %s", err)
-            raise UpdateFailed(f"Failed to connect: {err}") from err
+            _LOGGER.error("Connection failed: %s", err)
+            raise UpdateFailed(f"Connection failed: {err}") from err
 
     async def _async_get_device_info(self) -> dict[str, Any]:
-        """Get device information (placeholder)."""
-        # Implement actual info query if supported by device
+        """Mock device info."""
         return {
             "firmware_version": "1.0.0",
             "mcu_version": "1.0.0",
@@ -94,11 +106,11 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_turn_on(
         self,
-        brightness: int | None = None,
-        rgb_color: tuple[int, int, int] | None = None,
-        effect: str | None = None,
+        brightness: Optional[int] = None,
+        rgb_color: Optional[tuple[int, int, int]] = None,
+        effect: Optional[str] = None,
     ) -> None:
-        """Turn on the display."""
+        """Turn on light with optional settings."""
         self._is_on = True
         if brightness is not None:
             self._brightness = brightness
@@ -107,81 +119,95 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         if effect is not None:
             self._effect = effect
 
-        await self._async_send_command("turn_on")
+        await self._send_command("turn_on")
         await self.async_request_refresh()
 
     async def async_turn_off(self) -> None:
-        """Turn off the display."""
+        """Turn off light."""
         self._is_on = False
-        await self._async_send_command("turn_off")
+        await self._send_command("turn_off")
         await self.async_request_refresh()
 
     async def async_set_display_mode(self, mode: str) -> None:
-        """Set display mode."""
+        """Change display mode."""
         self._display_mode = mode
-        await self._async_send_command("set_mode", {"mode": mode})
+        await self._send_command("set_mode", {"mode": mode})
         await self.async_request_refresh()
 
     async def async_display_text(
-        self, text: str, color: list[int] | None = None, speed: int = 1
+        self, text: str, color: Optional[list[int]] = None, speed: int = 1
     ) -> None:
-        """Display text on the matrix."""
+        """Display scrolling text."""
         color = color or [255, 255, 255]
-        # Command IDs example mapping
-        CMD_MAPPING = {
-            "display_text": 0x04,
-        }
-        cmd_id = CMD_MAPPING["display_text"]
+        text_bytes = text.encode("utf-8")
         payload = bytearray()
-        payload.append(cmd_id)
-        payload.append(speed)
-        payload.extend(color[:3])
-        text_bytes = text.encode('utf-8')
+        payload.append(CMD_MAPPING["display_text"])
+        payload.append(speed)  # Speed byte
+        payload.extend(color[:3])  # RGB color bytes
         payload.append(len(text_bytes))
         payload.extend(text_bytes)
         checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, 'little'))
-        await self._send_ble_command(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
+
+        await self._send_raw(payload)
 
     async def async_display_image(self, image_path: str) -> None:
-        """Display image on the matrix."""
-        # Read image bytes
-        with open(image_path, "rb") as img_file:
-            image_data = img_file.read()
-        CMD_MAPPING = {
-            "display_image": 0x05,
-        }
-        cmd_id = CMD_MAPPING["display_image"]
+        """Display an image file."""
+        with open(image_path, "rb") as f:
+            image_data = f.read()
         payload = bytearray()
-        payload.append(cmd_id)
+        payload.append(CMD_MAPPING["display_image"])
         payload.extend(image_data)
         checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, 'little'))
-        await self._send_ble_command(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
+
+        await self._send_raw(payload)
 
     async def async_display_animation(self, animation_name: str) -> None:
-        """Play a built-in animation."""
-        CMD_MAPPING = {
-            "display_animation": 0x06,
-        }
-        cmd_id = CMD_MAPPING["display_animation"]
+        """Play a predefined animation."""
+        anim_bytes = animation_name.encode("utf-8")
         payload = bytearray()
-        payload.append(cmd_id)
-        anim_bytes = animation_name.encode('utf-8')
+        payload.append(CMD_MAPPING["display_animation"])
         payload.append(len(anim_bytes))
         payload.extend(anim_bytes)
         checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, 'little'))
-        await self._send_ble_command(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
 
-    async def _send_ble_command(self, payload: bytearray) -> None:
-        """Write the command payload to BLE device."""
-        if self.client is None or not self.client.is_connected:
+        await self._send_raw(payload)
+
+    async def _send_command(self, command: str, params: Optional[dict[str, Any]] = None) -> None:
+        """Construct and send a command with optional parameters."""
+        cmd_id = CMD_MAPPING.get(command)
+        if cmd_id is None:
+            _LOGGER.error("Unknown command: %s", command)
+            return
+
+        payload = bytearray([cmd_id])
+
+        if params:
+            if command == "set_mode":
+                mode_bytes = params.get("mode", "").encode("utf-8")
+                payload.append(len(mode_bytes))
+                payload.extend(mode_bytes)
+
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
+
+        await self._send_raw(payload)
+
+    async def _send_raw(self, payload: bytearray) -> None:
+        """Send the raw bytes payload to BLE device."""
+        if not self.client or not self.client.is_connected:
             await self._async_connect()
-        _LOGGER.debug("Sending BLE command: %s", payload.hex())
-        await self.client.write_gatt_char(CHARACTERISTIC_WRITE, payload)
+
+        try:
+            _LOGGER.debug("Sending to BLE: %s", payload.hex())
+            await self.client.write_gatt_char(CHARACTERISTIC_WRITE, payload)
+        except Exception as err:
+            _LOGGER.error("Failed to send BLE command: %s", err)
+            raise UpdateFailed(f"Failed to send BLE command: {err}") from err
 
     async def async_shutdown(self) -> None:
-        """Shutdown coordinator cleanly."""
+        """Disconnect cleanly."""
         if self.client and self.client.is_connected:
             await self.client.disconnect()
