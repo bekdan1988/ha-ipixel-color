@@ -2,40 +2,40 @@
   "config": {
     "step": {
       "user": {
-        "title": "iPixel Color Eszköz Kiválasztása",
-        "description": "Válaszd ki az iPixel Color LED mátrixod a felfedezett eszközök listájából.",
+        "title": "Bluetooth Eszköz Kiválasztása",
+        "description": "Válaszd ki a LED mátrix paneled a felfedezett Bluetooth eszközök listájából. Ha nem vagy biztos benne, melyik az, nézd meg a készülék nevét a telefonod Bluetooth menüjében vagy a használati útmutatóban.",
         "data": {
           "device_address": "Eszköz"
         }
       },
       "device_config": {
-        "title": "Kijelző Konfigurálása",
-        "description": "Állítsd be az iPixel Color kijelző beállításait.",
+        "title": "Kijelző Beállításai",
+        "description": "Állítsd be a LED mátrix kijelző paramétereit.",
         "data": {
-          "device_name": "Eszköz Neve",
-          "display_width": "Kijelző Szélesség (pixelek)",
-          "display_height": "Kijelző Magasság (pixelek)",
-          "update_interval": "Frissítési Időköz (másodperc)"
+          "device_name": "Eszköz neve",
+          "display_width": "Kijelző szélessége (pixel)",
+          "display_height": "Kijelző magassága (pixel)",
+          "update_interval": "Frissítési időköz (másodperc)"
         }
       }
     },
     "error": {
       "device_not_found": "A kiválasztott eszköz nem található",
       "cannot_connect": "Nem sikerült csatlakozni az eszközhöz",
-      "unknown": "Váratlan hiba"
+      "unknown": "Ismeretlen hiba"
     },
     "abort": {
       "already_configured": "Az eszköz már konfigurálva van",
-      "no_devices_found": "Nem találhatók iPixel Color eszközök"
+      "no_devices_found": "Nem találhatók Bluetooth eszközök"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "iPixel Color Beállítások",
-        "description": "Integráció beállításainak konfigurálása.",
+        "title": "LED-mátrix Beállításai",
+        "description": "Az integráció beállításainak módosítása.",
         "data": {
-          "update_interval": "Frissítési Időköz (másodperc)"
+          "update_interval": "Frissítési időköz (másodperc)"
         }
       }
     }
