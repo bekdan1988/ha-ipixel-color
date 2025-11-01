@@ -1,258 +1,78 @@
-"""Complete iPixel Color integration coordinator with BLE discovery."""
+# coordinator.py – kódrészlet: notify engedélyezés, szeletelés, robusztus write
 
-from __future__ import annotations
-
-from datetime import timedelta
-import logging
-from typing import Any, Optional
-
-import binascii
-from bleak import BleakClient, BleakError
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-
-from .const import (
-    DOMAIN,
-    CONF_DEVICE_ADDRESS,
-    CONF_UPDATE_INTERVAL,
-    DEFAULT_UPDATE_INTERVAL,
-)
-
-_LOGGER = logging.getLogger(__name__)
-
-# Command IDs based on iPixel Color BLE protocol
-CMD_MAPPING = {
-    "turn_on": 0x01,
-    "turn_off": 0x02,
-    "set_mode": 0x03,
-    "display_text": 0x04,
-    "display_image": 0x05,
-    "display_animation": 0x06,
-}
-
-def crc32(data: bytes) -> int:
-    """Calculate CRC32 checksum."""
-    return binascii.crc32(data) & 0xFFFFFFFF
-
-
 class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
-    """Manages communication with iPixel Color LED matrix."""
-
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Initialize coordinator."""
-        self.entry = entry
-        self.device_address = entry.data[CONF_DEVICE_ADDRESS]
-        self.client: Optional[BleakClient] = None
-        self.write_characteristic: Optional[BleakGATTCharacteristic] = None
-        self._is_on = False
-        self._brightness = 255
-        self._rgb_color = (255, 255, 255)
-        self._effect = "static"
-        self._display_mode = "off"
-
-        update_interval = timedelta(
-            seconds=entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
-        )
-
-        super().__init__(
-            hass,
-            _LOGGER,
-            name=DOMAIN,
-            update_interval=update_interval,
-        )
-
-    async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch latest device state."""
-        try:
-            if not self.client or not self.client.is_connected:
-                await self._async_connect()
-
-            device_info = await self._async_get_device_info()
-
-            return {
-                "is_on": self._is_on,
-                "brightness": self._brightness,
-                "rgb_color": self._rgb_color,
-                "effect": self._effect,
-                "display_mode": self._display_mode,
-                "connection_status": "connected",
-                "firmware_version": device_info.get("firmware_version", "Unknown"),
-            }
-        except Exception as err:
-            _LOGGER.error("Failed updating data: %s", err)
-            raise UpdateFailed(f"Failed updating data: {err}") from err
+    def __init__(...):
+        ...
+        self.write_characteristic: BleakGATTCharacteristic | None = None
+        self.notify_characteristics: list[BleakGATTCharacteristic] = []
 
     async def _async_connect(self) -> None:
-        """Connect BLE client to device."""
         if self.client and self.client.is_connected:
             return
         try:
             self.client = BleakClient(self.device_address)
             await self.client.connect()
-            _LOGGER.info("Connected to device at %s", self.device_address)
-            
-            # Discover and find writable characteristic
+            _LOGGER.info("Connected to %s", self.device_address)
             await self._discover_characteristics()
-            
+            await self._enable_notifications()
         except BleakError as err:
-            _LOGGER.error("Connection failed: %s", err)
             raise UpdateFailed(f"Connection failed: {err}") from err
 
     async def _discover_characteristics(self) -> None:
-        """Discover available characteristics on the device."""
-        if not self.client or not self.client.is_connected:
-            _LOGGER.error("Client not connected for characteristic discovery")
-            return
-
-        try:
-            services = self.client.services
-            _LOGGER.info("Discovering BLE services and characteristics...")
-            
-            for service in services:
-                _LOGGER.debug(f"Service: {service.uuid}")
-                for char in service.characteristics:
-                    _LOGGER.debug(
-                        f"  Characteristic: {char.uuid}, "
-                        f"Properties: {char.properties}"
-                    )
-                    
-                    # Look for writable characteristic
-                    if "write" in char.properties or "write-without-response" in char.properties:
+        # Bleak a connect után tölti fel a services-t backendtől függően
+        services = self.client.services
+        self.write_characteristic = None
+        self.notify_characteristics = []
+        for service in services:
+            for char in service.characteristics:
+                props = set(char.properties or [])
+                if "write_without_response" in props or "write" in props:
+                    # Első írható karakterisztika
+                    if not self.write_characteristic:
                         self.write_characteristic = char
-                        _LOGGER.info(
-                            f"Found writable characteristic: {char.uuid} "
-                            f"with properties: {char.properties}"
-                        )
-                        
-        except Exception as err:
-            _LOGGER.error("Failed to discover characteristics: %s", err)
+                if "notify" in props:
+                    self.notify_characteristics.append(char)
+        if not self.write_characteristic:
+            _LOGGER.error("No writable characteristic found")
 
-    async def _async_get_device_info(self) -> dict[str, Any]:
-        """Get device information."""
-        return {
-            "firmware_version": "1.0.0",
-            "mcu_version": "1.0.0",
-        }
+    async def _enable_notifications(self) -> None:
+        # Nem minden eszköz igényli, de tipikus a szükségessége
+        async def _noop_cb(handle: int, data: bytearray) -> None:
+            _LOGGER.debug("Notify %s: %s", handle, data.hex())
+        for ch in self.notify_characteristics:
+            try:
+                await self.client.start_notify(ch, _noop_cb)
+            except Exception as e:
+                _LOGGER.debug("Notify enable failed on %s: %s", ch.uuid, e)
 
-    async def async_turn_on(
-        self,
-        brightness: Optional[int] = None,
-        rgb_color: Optional[tuple[int, int, int]] = None,
-        effect: Optional[str] = None,
-    ) -> None:
-        """Turn on light with optional settings."""
-        self._is_on = True
-        if brightness is not None:
-            self._brightness = brightness
-        if rgb_color is not None:
-            self._rgb_color = rgb_color
-        if effect is not None:
-            self._effect = effect
-
-        await self._send_command("turn_on")
-        await self.async_request_refresh()
-
-    async def async_turn_off(self) -> None:
-        """Turn off light."""
-        self._is_on = False
-        await self._send_command("turn_off")
-        await self.async_request_refresh()
-
-    async def async_set_display_mode(self, mode: str) -> None:
-        """Change display mode."""
-        self._display_mode = mode
-        await self._send_command("set_mode", {"mode": mode})
-        await self.async_request_refresh()
-
-    async def async_display_text(
-        self, text: str, color: Optional[list[int]] = None, speed: int = 1
-    ) -> None:
-        """Display scrolling text."""
-        color = color or [255, 255, 255]
-        text_bytes = text.encode("utf-8")
-        payload = bytearray()
-        payload.append(CMD_MAPPING["display_text"])
-        payload.append(speed)  # Speed byte
-        payload.extend(color[:3])  # RGB color bytes
-        payload.append(len(text_bytes))
-        payload.extend(text_bytes)
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
-
-    async def async_display_image(self, image_path: str) -> None:
-        """Display an image file."""
-        with open(image_path, "rb") as f:
-            image_data = f.read()
-        payload = bytearray()
-        payload.append(CMD_MAPPING["display_image"])
-        payload.extend(image_data)
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
-
-    async def async_display_animation(self, animation_name: str) -> None:
-        """Play a predefined animation."""
-        anim_bytes = animation_name.encode("utf-8")
-        payload = bytearray()
-        payload.append(CMD_MAPPING["display_animation"])
-        payload.append(len(anim_bytes))
-        payload.extend(anim_bytes)
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
-
-    async def _send_command(self, command: str, params: Optional[dict[str, Any]] = None) -> None:
-        """Construct and send a command with optional parameters."""
-        cmd_id = CMD_MAPPING.get(command)
-        if cmd_id is None:
-            _LOGGER.error("Unknown command: %s", command)
-            return
-
-        payload = bytearray([cmd_id])
-
-        if params:
-            if command == "set_mode":
-                mode_bytes = params.get("mode", "").encode("utf-8")
-                payload.append(len(mode_bytes))
-                payload.extend(mode_bytes)
-
-        checksum = crc32(payload)
-        payload.extend(checksum.to_bytes(4, "little"))
-
-        await self._send_raw(payload)
+    def _max_write_size(self) -> int:
+        # Bleak API: max write without response méret lekérdezése (backend-függő)
+        # Ha nem elérhető, fallback: 20 bájt (MTU 23 -> 23-3)
+        try:
+            # A Bleak doksi szerint elérhető maximum write size response=False módban
+            # Backendtől függően property vagy metódus lehet elérhető.
+            size = getattr(self.client, "mtu_size", None)
+            if isinstance(size, int) and size > 3:
+                return max(20, size - 3)
+        except Exception:
+            pass
+        return 20
 
     async def _send_raw(self, payload: bytearray) -> None:
-        """Send raw bytes payload to BLE device."""
         if not self.client or not self.client.is_connected:
             await self._async_connect()
-
         if not self.write_characteristic:
-            _LOGGER.error("Write characteristic not found. Cannot send data.")
-            return
+            raise UpdateFailed("Writable characteristic not found")
 
-        try:
-            _LOGGER.debug("Sending to BLE characteristic %s: %s", 
-                         self.write_characteristic.uuid, payload.hex())
-            
-            # Use write_gatt_char with the discovered characteristic
-            await self.client.write_gatt_char(
-                self.write_characteristic,
-                payload
-            )
-            _LOGGER.debug("Data sent successfully")
-            
-        except Exception as err:
-            _LOGGER.error("Failed to send BLE command: %s", err)
-            raise UpdateFailed(f"Failed to send BLE command: {err}") from err
+        max_chunk = self._max_write_size()
+        offset = 0
+        # Előny: write_without_response, ha a karakterisztika támogatja
+        use_response = "write" in set(self.write_characteristic.properties or []) and \
+                       "write_without_response" not in set(self.write_characteristic.properties or [])
 
-    async def async_shutdown(self) -> None:
-        """Disconnect cleanly."""
-        if self.client and self.client.is_connected:
-            await self.client.disconnect()
+        while offset < len(payload):
+            chunk = payload[offset: offset + max_chunk]
+            await self.client.write_gatt_char(self.write_characteristic, chunk, response=use_response)
+            offset += len(chunk)
