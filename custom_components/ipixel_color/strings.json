@@ -1,0 +1,142 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Select iPixel Color Device",
+        "description": "Select your iPixel Color LED matrix from the list of discovered devices.",
+        "data": {
+          "device_address": "Device"
+        }
+      },
+      "device_config": {
+        "title": "Configure Display",
+        "description": "Configure your iPixel Color display settings.",
+        "data": {
+          "device_name": "Device Name",
+          "display_width": "Display Width (pixels)",
+          "display_height": "Display Height (pixels)",
+          "update_interval": "Update Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "device_not_found": "Selected device not found",
+      "cannot_connect": "Failed to connect to device",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "no_devices_found": "No iPixel Color devices found"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iPixel Color Options",
+        "description": "Configure integration options.",
+        "data": {
+          "update_interval": "Update Interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "display": {
+        "name": "Display"
+      }
+    },
+    "switch": {
+      "power": {
+        "name": "Power"
+      }
+    },
+    "sensor": {
+      "connection_status": {
+        "name": "Connection Status"
+      },
+      "firmware_version": {
+        "name": "Firmware Version"
+      }
+    },
+    "select": {
+      "display_mode": {
+        "name": "Display Mode",
+        "state": {
+          "text": "Text",
+          "image": "Image",
+          "clock": "Clock",
+          "animation": "Animation",
+          "diy": "DIY",
+          "off": "Off"
+        }
+      },
+      "clock_mode": {
+        "name": "Clock Mode",
+        "state": {
+          "digital": "Digital",
+          "analog": "Analog",
+          "custom": "Custom"
+        }
+      }
+    },
+    "number": {
+      "animation_speed": {
+        "name": "Animation Speed"
+      },
+      "scroll_speed": {
+        "name": "Scroll Speed"
+      }
+    }
+  },
+  "services": {
+    "display_text": {
+      "name": "Display Text",
+      "description": "Display text on the LED matrix.",
+      "fields": {
+        "text": {
+          "name": "Text",
+          "description": "Text to display."
+        },
+        "color": {
+          "name": "Color",
+          "description": "RGB color for the text."
+        },
+        "speed": {
+          "name": "Speed",
+          "description": "Scroll speed (1-10)."
+        }
+      }
+    },
+    "display_image": {
+      "name": "Display Image",
+      "description": "Display an image on the LED matrix.",
+      "fields": {
+        "image_path": {
+          "name": "Image Path",
+          "description": "Path to the image file."
+        }
+      }
+    },
+    "display_animation": {
+      "name": "Display Animation",
+      "description": "Display a built-in animation.",
+      "fields": {
+        "animation": {
+          "name": "Animation",
+          "description": "Animation name."
+        }
+      }
+    },
+    "set_clock": {
+      "name": "Set Clock",
+      "description": "Set clock display mode.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "Clock display mode."
+        }
+      }
+    }
+  }
+}
