@@ -57,7 +57,6 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._selected_device = device
                 return await self.async_step_device_config()
 
-        # Discover ALL Bluetooth devices (no filtering on name)
         discovered_devices = await self._async_discover_devices()
 
         if not discovered_devices:
@@ -76,9 +75,6 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
-            description_placeholders={
-                "select_tip": "Select the LED matrix device from all Bluetooth devices in the list."
-            },
         )
 
     async def async_step_device_config(
@@ -126,10 +122,10 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def _async_discover_devices(self) -> dict[str, BLEDevice]:
-        """Discover ALL Bluetooth devices via Home Assistant or Bleak."""
-        _LOGGER.debug("Discovering ALL Bluetooth devices via HA or Bleak")
+        """Discover ALL Bluetooth devices."""
+        _LOGGER.debug("Discovering Bluetooth devices")
         discovered = {}
-        # Use Home Assistant Bluetooth integration if available
+        
         if bluetooth.async_scanner_count(self.hass) > 0:
             devices = bluetooth.async_discovered_service_info(self.hass)
             for device_info in devices:
