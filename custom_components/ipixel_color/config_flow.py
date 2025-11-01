@@ -130,7 +130,7 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if bluetooth.async_scanner_count(self.hass) > 0:
             devices = bluetooth.async_discovered_service_info(self.hass)
             for device_info in devices:
-                if device_info.name and "ipixel" in device_info.name.lower():
+                if device_info.name and "LED" in device_info.name.lower():
                     discovered[device_info.address] = BLEDevice(
                         address=device_info.address,
                         name=device_info.name,
