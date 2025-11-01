@@ -10,7 +10,6 @@ from bleak.backends.device import BLEDevice
 
 from homeassistant import config_entries
 from homeassistant.components import bluetooth
-from homeassistant.const import CONF_ADDRESS
 from homeassistant.data_entry_flow import FlowResult
 import homeassistant.helpers.config_validation as cv
 
@@ -58,7 +57,6 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._selected_device = device
                 return await self.async_step_device_config()
 
-        # Discover BLE devices
         discovered_devices = await self._async_discover_devices()
         
         if not discovered_devices:
@@ -129,7 +127,6 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         discovered = {}
         
-        # Use Home Assistant's bluetooth integration if available
         if bluetooth.async_scanner_count(self.hass) > 0:
             devices = bluetooth.async_discovered_service_info(self.hass)
             for device_info in devices:
@@ -141,7 +138,6 @@ class IPixelColorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         rssi=device_info.rssi,
                     )
         else:
-            # Fallback to direct Bleak scanning
             devices = await BleakScanner.discover(timeout=10.0)
             for device in devices:
                 if device.name and "ipixel" in device.name.lower():
