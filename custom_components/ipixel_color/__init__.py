@@ -47,18 +47,4 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     async def handle_display_image(service_call: Any) -> None:
         entity_id = service_call.data["entity_id"]
-        image_path = service_call.data["image_path"]
-
-        coordinator = None
-        for coord in hass.data.get(DOMAIN, {}).values():
-            if hasattr(coord, "async_display_image"):
-                coordinator = coord
-                break
-
-        if coordinator is None:
-            _LOGGER.error("Coordinator not found to display image")
-            return
-
-        await coordinator.async_display_image(image_path)
-
-    async def handle_display_animation(service_call: Any) -> None:
+        image_path = servi
