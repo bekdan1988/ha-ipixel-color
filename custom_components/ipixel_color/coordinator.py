@@ -148,3 +148,111 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         if brightness is not None:
             self._brightness = brightness
         if rgb_color is not None:
+            self._rgb_color = rgb_color
+        if effect is not None:
+            self._effect = effect
+
+        await self._send_command("turn_on")
+        await self.async_request_refresh()
+
+    async def async_turn_off(self) -> None:
+        """Turn off light."""
+        self._is_on = False
+        await self._send_command("turn_off")
+        await self.async_request_refresh()
+
+    async def async_set_display_mode(self, mode: str) -> None:
+        """Change display mode."""
+        self._display_mode = mode
+        await self._send_command("set_mode", {"mode": mode})
+        await self.async_request_refresh()
+
+    async def async_display_text(
+        self, text: str, color: Optional[list[int]] = None, speed: int = 1
+    ) -> None:
+        """Display scrolling text."""
+        color = color or [255, 255, 255]
+        text_bytes = text.encode("utf-8")
+        payload = bytearray()
+        payload.append(CMD_MAPPING["display_text"])
+        payload.append(speed)  # Speed byte
+        payload.extend(color[:3])  # RGB color bytes
+        payload.append(len(text_bytes))
+        payload.extend(text_bytes)
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
+
+        await self._send_raw(payload)
+
+    async def async_display_image(self, image_path: str) -> None:
+        """Display an image file."""
+        with open(image_path, "rb") as f:
+            image_data = f.read()
+        payload = bytearray()
+        payload.append(CMD_MAPPING["display_image"])
+        payload.extend(image_data)
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
+
+        await self._send_raw(payload)
+
+    async def async_display_animation(self, animation_name: str) -> None:
+        """Play a predefined animation."""
+        anim_bytes = animation_name.encode("utf-8")
+        payload = bytearray()
+        payload.append(CMD_MAPPING["display_animation"])
+        payload.append(len(anim_bytes))
+        payload.extend(anim_bytes)
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
+
+        await self._send_raw(payload)
+
+    async def _send_command(self, command: str, params: Optional[dict[str, Any]] = None) -> None:
+        """Construct and send a command with optional parameters."""
+        cmd_id = CMD_MAPPING.get(command)
+        if cmd_id is None:
+            _LOGGER.error("Unknown command: %s", command)
+            return
+
+        payload = bytearray([cmd_id])
+
+        if params:
+            if command == "set_mode":
+                mode_bytes = params.get("mode", "").encode("utf-8")
+                payload.append(len(mode_bytes))
+                payload.extend(mode_bytes)
+
+        checksum = crc32(payload)
+        payload.extend(checksum.to_bytes(4, "little"))
+
+        await self._send_raw(payload)
+
+    async def _send_raw(self, payload: bytearray) -> None:
+        """Send raw bytes payload to BLE device."""
+        if not self.client or not self.client.is_connected:
+            await self._async_connect()
+
+        if not self.write_characteristic:
+            _LOGGER.error("Write characteristic not found. Cannot send data.")
+            return
+
+        try:
+            _LOGGER.debug("Sending to BLE characteristic %s: %s", 
+                         self.write_characteristic.uuid, payload.hex())
+            
+            # Use write_gatt_char with the discovered characteristic
+            await self.client.write_gatt_char(
+                self.write_characteristic,
+                payload
+            )
+            _LOGGER.debug("Data sent successfully")
+            
+        except Exception as err:
+            _LOGGER.error("Failed to send BLE command: %s", err)
+            raise UpdateFailed(f"Failed to send BLE command: {err}") from err
+
+    async def async_shutdown(self) -> None:
+        """Disconnect cleanly."""
+        if self.client and self.client.is_connected:
+            await self.client.disconnect()
