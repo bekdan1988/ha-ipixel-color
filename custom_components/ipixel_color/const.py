@@ -15,7 +15,7 @@ DEFAULT_UPDATE_INTERVAL: Final = 30
 DEFAULT_WIDTH: Final = 32
 DEFAULT_HEIGHT: Final = 32
 
-# BLE characteristics (based on reverse engineering)
+# BLE characteristics
 SERVICE_UUID: Final = "0000fff0-0000-1000-8000-00805f9b34fb"
 CHARACTERISTIC_WRITE: Final = "0000fff3-0000-1000-8000-00805f9b34fb"
 CHARACTERISTIC_NOTIFY: Final = "0000fff4-0000-1000-8000-00805f9b34fb"
@@ -66,11 +66,6 @@ EFFECTS: Final = [
     EFFECT_BLINK,
     EFFECT_FADE,
 ]
-
-# Sensor types
-SENSOR_CONNECTION_STATUS: Final = "connection_status"
-SENSOR_FIRMWARE_VERSION: Final = "firmware_version"
-SENSOR_DISPLAY_MODE: Final = "display_mode"
 
 # Attributes
 ATTR_DISPLAY_MODE: Final = "display_mode"
