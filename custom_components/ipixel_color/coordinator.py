@@ -75,4 +75,57 @@ class IPixelColorDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             self.client = BleakClient(self.device_address)
             await self.client.connect()
-            _LOGGER.info("Connected to
+            _LOGGER.info("Connected to iPixel Color device at %s", self.device_address)
+        except BleakError as err:
+            _LOGGER.error("Failed to connect to device: %s", err)
+            raise UpdateFailed(f"Failed to connect: {err}") from err
+
+    async def _async_get_device_info(self) -> dict[str, Any]:
+        """Get device information (placeholder)."""
+        # Implement actual info query if supported by device
+        return {
+            "firmware_version": "1.0.0",
+            "mcu_version": "1.0.0",
+        }
+
+    async def async_turn_on(
+        self,
+        brightness: int | None = None,
+        rgb_color: tuple[int, int, int] | None = None,
+        effect: str | None = None,
+    ) -> None:
+        """Turn on the display."""
+        self._is_on = True
+        if brightness is not None:
+            self._brightness = brightness
+        if rgb_color is not None:
+            self._rgb_color = rgb_color
+        if effect is not None:
+            self._effect = effect
+
+        await self._async_send_command("turn_on")
+        await self.async_request_refresh()
+
+    async def async_turn_off(self) -> None:
+        """Turn off the display."""
+        self._is_on = False
+        await self._async_send_command("turn_off")
+        await self.async_request_refresh()
+
+    async def async_set_display_mode(self, mode: str) -> None:
+        """Set display mode."""
+        self._display_mode = mode
+        await self._async_send_command("set_mode", {"mode": mode})
+        await self.async_request_refresh()
+
+    async def async_display_text(
+        self, text: str, color: list[int] | None = None, speed: int = 1
+    ) -> None:
+        """Display text on the matrix."""
+        color = color or [255, 255, 255]
+        # TODO: Encode the text command per iPixel Color BLE protocol and send
+        _LOGGER.debug(f"Displaying text: '{text}' with color {color} and speed {speed}")
+        # Example: await self._send_ble_command(constructed_bytes)
+
+    async def async_display_image(self, image_path: str) -> None:
+        """Display image
